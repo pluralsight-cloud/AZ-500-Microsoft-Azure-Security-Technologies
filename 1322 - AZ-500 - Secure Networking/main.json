@@ -5,13 +5,17 @@
     "_generator": {
       "name": "bicep",
       "version": "0.19.5.34762",
-      "templateHash": "11817772985643715299"
+      "templateHash": "1218199736379037660"
     }
   },
   "parameters": {
     "location": {
       "type": "string",
       "defaultValue": "eastus"
+    },
+    "secondaryRegion": {
+      "type": "string",
+      "defaultValue": "westus"
     },
     "hubVNetName": {
       "type": "string",
@@ -20,6 +24,10 @@
     "spokeVNetName": {
       "type": "string",
       "defaultValue": "vnet-spoke"
+    },
+    "westUSVNetName": {
+      "type": "string",
+      "defaultValue": "vnet-wus-01"
     },
     "hqVNetName": {
       "type": "string",
@@ -37,6 +45,10 @@
       "type": "string",
       "defaultValue": "default"
     },
+    "westUSVNetSubnetName": {
+      "type": "string",
+      "defaultValue": "default"
+    },
     "hubVNetAddressPrefix": {
       "type": "string",
       "defaultValue": "10.0.0.0/16"
@@ -44,6 +56,10 @@
     "spokeVNetAddressPrefix": {
       "type": "string",
       "defaultValue": "10.1.0.0/16"
+    },
+    "westUSVNetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "172.16.0.0/16"
     },
     "hqVNetAddressPrefix": {
       "type": "string",
@@ -56,6 +72,10 @@
     "spokeSubnetAddressPrefix": {
       "type": "string",
       "defaultValue": "10.1.1.0/24"
+    },
+    "westUSVNetSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "172.16.0.0/24"
     },
     "hqSubnetAddressPrefix": {
       "type": "string",
@@ -172,20 +192,26 @@
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2023-02-01",
-      "name": "nsg-hub",
+      "name": "nsg-hub-01",
       "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2023-02-01",
-      "name": "nsg-spoke",
+      "name": "nsg-spoke-01",
       "location": "[parameters('location')]"
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2023-02-01",
-      "name": "nsg-hq",
+      "name": "nsg-hq-01",
       "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-02-01",
+      "name": "nsg-wus-01",
+      "location": "[parameters('secondaryRegion')]"
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
@@ -204,7 +230,7 @@
             "properties": {
               "addressPrefix": "[parameters('hubSubnetAddressPrefix')]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-hub')]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-hub-01')]"
               }
             }
           },
@@ -229,7 +255,7 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-hub')]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-hub-01')]"
       ]
     },
     {
@@ -249,14 +275,41 @@
             "properties": {
               "addressPrefix": "[parameters('spokeSubnetAddressPrefix')]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-spoke')]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-spoke-01')]"
               }
             }
           }
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-spoke')]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-spoke-01')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-02-01",
+      "name": "[parameters('westUSVNetName')]",
+      "location": "[parameters('secondaryRegion')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('westUSVNetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('westUSVNetSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('westUSVNetSubnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-wus-01')]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-wus-01')]"
       ]
     },
     {
@@ -276,7 +329,7 @@
             "properties": {
               "addressPrefix": "[parameters('hqSubnetAddressPrefix')]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-hq')]"
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-hq-01')]"
               }
             }
           },
@@ -295,7 +348,7 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-hq')]"
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg-hq-01')]"
       ]
     },
     {
@@ -331,7 +384,7 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2023-02-01",
-      "name": "[format('{0}-hub-nic', parameters('vmName'))]",
+      "name": "[format('nic-{0}-hub-01', parameters('vmName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
@@ -353,7 +406,7 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2023-02-01",
-      "name": "[format('{0}-spoke-nic', parameters('vmName'))]",
+      "name": "[format('nic-{0}-spoke-01', parameters('vmName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
@@ -375,7 +428,29 @@
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2023-02-01",
-      "name": "[format('{0}-hq-nic', parameters('vmName'))]",
+      "name": "[format('nic-{0}-wus-01', parameters('vmName'))]",
+      "location": "[parameters('secondaryRegion')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[format('{0}/subnets/{1}', resourceId('Microsoft.Network/virtualNetworks', parameters('westUSVNetName')), parameters('westUSVNetSubnetName'))]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('westUSVNetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-02-01",
+      "name": "[format('nic-{0}-hq-01', parameters('vmName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
@@ -397,7 +472,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2023-03-01",
-      "name": "[format('{0}-hub', parameters('vmName'))]",
+      "name": "[format('{0}-hub-01', parameters('vmName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
@@ -412,26 +487,26 @@
           }
         },
         "osProfile": {
-          "computerName": "[format('{0}-hub', parameters('vmName'))]",
+          "computerName": "[format('{0}-hub-01', parameters('vmName'))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-hub-nic', parameters('vmName')))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-hub-01', parameters('vmName')))]"
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-hub-nic', parameters('vmName')))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-hub-01', parameters('vmName')))]"
       ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2023-03-01",
-      "name": "[format('{0}-spoke', parameters('vmName'))]",
+      "name": "[format('{0}-spoke-01', parameters('vmName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
@@ -446,26 +521,60 @@
           }
         },
         "osProfile": {
-          "computerName": "[format('{0}-spoke', parameters('vmName'))]",
+          "computerName": "[format('{0}-spoke-01', parameters('vmName'))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-spoke-nic', parameters('vmName')))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-spoke-01', parameters('vmName')))]"
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-spoke-nic', parameters('vmName')))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-spoke-01', parameters('vmName')))]"
       ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2023-03-01",
-      "name": "[format('{0}-hq', parameters('vmName'))]",
+      "name": "[format('{0}-wus-01', parameters('vmName'))]",
+      "location": "[parameters('secondaryRegion')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('vmPublisher')]",
+            "offer": "[parameters('vmOffer')]",
+            "sku": "[parameters('vmSku')]",
+            "version": "[parameters('vmVersion')]"
+          }
+        },
+        "osProfile": {
+          "computerName": "[format('{0}-wus-01', parameters('vmName'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-wus-01', parameters('vmName')))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-wus-01', parameters('vmName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-03-01",
+      "name": "[format('{0}-hq-01', parameters('vmName'))]",
       "location": "[parameters('location')]",
       "properties": {
         "hardwareProfile": {
@@ -480,20 +589,20 @@
           }
         },
         "osProfile": {
-          "computerName": "[format('{0}-hq', parameters('vmName'))]",
+          "computerName": "[format('{0}-hq-01', parameters('vmName'))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-hq-nic', parameters('vmName')))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-hq-01', parameters('vmName')))]"
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-hq-nic', parameters('vmName')))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', format('nic-{0}-hq-01', parameters('vmName')))]"
       ]
     },
     {

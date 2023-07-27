@@ -1,15 +1,20 @@
 param location string = 'eastus'
+param secondaryRegion string = 'westus'
 param hubVNetName string = 'vnet-hub'
 param spokeVNetName string = 'vnet-spoke'
+param westUSVNetName string = 'vnet-wus-01'
 param hqVNetName string = 'vnet-hq'
 param hubSubnetName string = 'default'
 param spokeSubnetName string = 'default'
 param hqSubnetName string = 'default'
+param westUSVNetSubnetName string = 'default'
 param hubVNetAddressPrefix string = '10.0.0.0/16'
 param spokeVNetAddressPrefix string = '10.1.0.0/16'
+param westUSVNetAddressPrefix string = '172.16.0.0/16'
 param hqVNetAddressPrefix string = '10.2.0.0/16'
 param hubSubnetAddressPrefix string = '10.0.1.0/24'
 param spokeSubnetAddressPrefix string = '10.1.1.0/24'
+param westUSVNetSubnetAddressPrefix string = '172.16.0.0/24'
 param hqSubnetAddressPrefix string = '10.2.1.0/24'
 param hubGatewaySubnetPrefix string = '10.0.2.0/24'
 param hqGatewaySubnetPrefix string = '10.2.2.0/24'
@@ -43,18 +48,23 @@ param mainRouteTableName string = 'rt-main'
 
 // Network Security Groups
 resource hubNSG 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
-  name: 'nsg-hub'
+  name: 'nsg-hub-01'
   location: location
 }
 
 resource spokeNSG 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
-  name: 'nsg-spoke'
+  name: 'nsg-spoke-01'
   location: location
 }
 
 resource hqNSG 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
-  name: 'nsg-hq'
+  name: 'nsg-hq-01'
   location: location
+}
+
+resource westUSNSG 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
+  name: 'nsg-wus-01'
+  location: secondaryRegion
 }
 
 // Virtual Networks
@@ -122,6 +132,29 @@ resource spokeVNet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
   }
 }
 
+resource westUSVNet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
+  name: westUSVNetName
+  location: secondaryRegion
+  properties: {
+    addressSpace: {
+      addressPrefixes: [
+        westUSVNetAddressPrefix
+      ]
+    }
+    subnets: [
+      {
+        name: westUSVNetSubnetName
+        properties: {
+          addressPrefix: westUSVNetSubnetAddressPrefix
+          networkSecurityGroup: {
+            id: westUSNSG.id
+          }
+        }
+      }
+    ]
+  }
+}
+
 resource hqVNet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
   name: hqVNetName
   location: location
@@ -182,7 +215,7 @@ resource spokeToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
 
 // Network Interfaces
 resource hubNic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
-  name: '${vmName}-hub-nic'
+  name: 'nic-${vmName}-hub-01'
   location: location
   properties: {
     ipConfigurations: [
@@ -200,7 +233,7 @@ resource hubNic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
 }
 
 resource spokeNic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
-  name: '${vmName}-spoke-nic'
+  name: 'nic-${vmName}-spoke-01'
   location: location
   properties: {
     ipConfigurations: [
@@ -217,8 +250,26 @@ resource spokeNic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
   }
 }
 
+resource westUSNic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
+  name: 'nic-${vmName}-wus-01'
+  location: secondaryRegion
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'ipconfig1'
+        properties: {
+          subnet: {
+            id: '${westUSVNet.id}/subnets/${westUSVNetSubnetName}'
+          }
+          privateIPAllocationMethod: 'Dynamic'
+        }
+      }
+    ]
+  }
+}
+
 resource hqNic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
-  name: '${vmName}-hq-nic'
+  name: 'nic-${vmName}-hq-01'
   location: location
   properties: {
     ipConfigurations: [
@@ -237,7 +288,7 @@ resource hqNic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
 
 // VMs
 resource hubVM 'Microsoft.Compute/virtualMachines@2023-03-01' = {
-  name: '${vmName}-hub'
+  name: '${vmName}-hub-01'
   location: location
   properties: {
     hardwareProfile: {
@@ -252,7 +303,7 @@ resource hubVM 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       }
     }
     osProfile: {
-      computerName: '${vmName}-hub'
+      computerName: '${vmName}-hub-01'
       adminUsername: adminUsername
       adminPassword: adminPassword
     }
@@ -267,7 +318,7 @@ resource hubVM 'Microsoft.Compute/virtualMachines@2023-03-01' = {
 }
 
 resource spokeVM 'Microsoft.Compute/virtualMachines@2023-03-01' = {
-  name: '${vmName}-spoke'
+  name: '${vmName}-spoke-01'
   location: location
   properties: {
     hardwareProfile: {
@@ -282,7 +333,7 @@ resource spokeVM 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       }
     }
     osProfile: {
-      computerName: '${vmName}-spoke'
+      computerName: '${vmName}-spoke-01'
       adminUsername: adminUsername
       adminPassword: adminPassword
     }
@@ -296,8 +347,38 @@ resource spokeVM 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   }
 }
 
+resource westUSVM 'Microsoft.Compute/virtualMachines@2023-03-01' = {
+  name: '${vmName}-wus-01'
+  location: secondaryRegion
+  properties: {
+    hardwareProfile: {
+      vmSize: vmSize
+    }
+    storageProfile: {
+      imageReference: {
+        publisher: vmPublisher
+        offer: vmOffer
+        sku: vmSku
+        version: vmVersion
+      }
+    }
+    osProfile: {
+      computerName: '${vmName}-wus-01'
+      adminUsername: adminUsername
+      adminPassword: adminPassword
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: westUSNic.id
+        }
+      ]
+    }
+  }
+}
+
 resource hqVM 'Microsoft.Compute/virtualMachines@2023-03-01' = {
-  name: '${vmName}-hq'
+  name: '${vmName}-hq-01'
   location: location
   properties: {
     hardwareProfile: {
@@ -312,7 +393,7 @@ resource hqVM 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       }
     }
     osProfile: {
-      computerName: '${vmName}-hq'
+      computerName: '${vmName}-hq-01'
       adminUsername: adminUsername
       adminPassword: adminPassword
     }

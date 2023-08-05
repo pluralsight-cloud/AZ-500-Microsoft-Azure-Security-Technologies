@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.19.5.34762",
-      "templateHash": "1218199736379037660"
+      "templateHash": "4966850243008895128"
     }
   },
   "parameters": {
@@ -101,6 +101,10 @@
       "type": "string",
       "defaultValue": "10.0.4.0/24"
     },
+    "appGatewaySubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.5.0/24"
+    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_D2s_v3"
@@ -164,6 +168,10 @@
       "type": "string",
       "defaultValue": "pip-hq-vng"
     },
+    "appGatewayPublicIPName": {
+      "type": "string",
+      "defaultValue": "pip-appgw-01"
+    },
     "hubLocalNetworkGatewayName": {
       "type": "string",
       "defaultValue": "lng-hub"
@@ -186,6 +194,30 @@
     "mainRouteTableName": {
       "type": "string",
       "defaultValue": "rt-main"
+    },
+    "randomValue": {
+      "type": "string",
+      "defaultValue": "[substring(uniqueString(resourceGroup().id), 1, 4)]"
+    },
+    "stgAccountName": {
+      "type": "string",
+      "defaultValue": "[format('stgaccount{0}', parameters('randomValue'))]"
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "defaultValue": "[format('appplan{0}', parameters('randomValue'))]"
+    },
+    "webApp1Name": {
+      "type": "string",
+      "defaultValue": "[format('az500app1{0}', parameters('randomValue'))]"
+    },
+    "webApp2Name": {
+      "type": "string",
+      "defaultValue": "[format('az500app2{0}', parameters('randomValue'))]"
+    },
+    "appGatewayName": {
+      "type": "string",
+      "defaultValue": "appgw-01"
     }
   },
   "resources": [
@@ -250,6 +282,12 @@
             "name": "AzureFirewallSubnet",
             "properties": {
               "addressPrefix": "[parameters('azureFirewallSubnetPrefix')]"
+            }
+          },
+          {
+            "name": "AppGatewaySubnet",
+            "properties": {
+              "addressPrefix": "[parameters('appGatewaySubnetPrefix')]"
             }
           }
         ]
@@ -923,6 +961,183 @@
       "properties": {
         "disableBgpRoutePropagation": false
       }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('stgAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_GRS"
+      },
+      "kind": "StorageV2"
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "reserved": true
+      },
+      "sku": {
+        "name": "S1"
+      },
+      "kind": "linux"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('webApp1Name')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+        "siteConfig": {
+          "linuxFxVersion": "node|14-lts"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('webApp2Name')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+        "siteConfig": {
+          "linuxFxVersion": "node|14-lts"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-02-01",
+      "name": "[parameters('appGatewayPublicIPName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "zones": [
+        "1"
+      ],
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "apiVersion": "2023-02-01",
+      "name": "[parameters('appGatewayName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "Standard_v2",
+          "tier": "Standard_v2",
+          "capacity": 2
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[format('{0}/subnets/AppGatewaySubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('hubVNetName')))]"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewayPublicIPName'))]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort",
+            "properties": {
+              "port": 80
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appGatewayBackendPool",
+            "properties": {
+              "backendAddresses": [
+                {
+                  "fqdn": "[reference(resourceId('Microsoft.Web/sites', parameters('webApp1Name')), '2022-09-01').defaultHostName]"
+                },
+                {
+                  "fqdn": "[reference(resourceId('Microsoft.Web/sites', parameters('webApp2Name')), '2022-09-01').defaultHostName]"
+                }
+              ]
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings",
+            "properties": {
+              "port": 80,
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled",
+              "requestTimeout": 20,
+              "pickHostNameFromBackendAddress": true
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appGatewayHttpListener",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', parameters('appGatewayName'), 'appGatewayFrontendIP')]"
+              },
+              "frontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', parameters('appGatewayName'), 'appGatewayFrontendPort')]"
+              },
+              "protocol": "Http",
+              "sslCertificate": null
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "name": "rule1",
+            "properties": {
+              "priority": 1,
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', parameters('appGatewayName'), 'appGatewayHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', parameters('appGatewayName'), 'appGatewayBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', parameters('appGatewayName'), 'appGatewayBackendHttpSettings')]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewayPublicIPName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('hubVNetName'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('webApp1Name'))]",
+        "[resourceId('Microsoft.Web/sites', parameters('webApp2Name'))]"
+      ]
     }
   ]
 }

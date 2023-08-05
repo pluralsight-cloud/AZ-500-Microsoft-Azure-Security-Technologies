@@ -21,6 +21,7 @@ param hqGatewaySubnetPrefix string = '10.2.2.0/24'
 param hubBastionSubnetPrefix string = '10.0.3.0/24'
 param hqBastionSubnetPrefix string = '10.2.3.0/24'
 param azureFirewallSubnetPrefix string = '10.0.4.0/24'
+param appGatewaySubnetPrefix string = '10.0.5.0/24'
 param vmSize string = 'Standard_D2s_v3'
 param adminUsername string = 'azureuser'
 @secure()
@@ -38,6 +39,7 @@ param hubVNetGatewayName string = 'vng-hub'
 param hqVNetGatewayName string = 'vng-hq'
 param hubVNetGatewayPublicIPName string = 'pip-hub-vng'
 param hqVNetGatewayPublicIPName string = 'pip-hq-vng'
+param appGatewayPublicIPName string = 'pip-appgw-01'
 param hubLocalNetworkGatewayName string = 'lng-hub'
 param hqLocalNetworkGatewayName string = 'lng-hq'
 @secure()
@@ -45,6 +47,12 @@ param vpnSharedKey string
 param hubFirewallPublicIPName string = 'pip-fw-hub'
 param hubFirewallName string = 'fw-hub'
 param mainRouteTableName string = 'rt-main'
+param randomValue string = substring(uniqueString(resourceGroup().id), 1, 4)
+param stgAccountName string = 'stgaccount${randomValue}'
+param appServicePlanName string = 'appplan${randomValue}'
+param webApp1Name string = 'az500app1${randomValue}'
+param webApp2Name string = 'az500app2${randomValue}'
+param appGatewayName string = 'appgw-01'
 
 // Network Security Groups
 resource hubNSG 'Microsoft.Network/networkSecurityGroups@2023-02-01' = {
@@ -103,6 +111,12 @@ resource hubVNet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
         name: 'AzureFirewallSubnet'
         properties: {
           addressPrefix: azureFirewallSubnetPrefix
+        }
+      }
+      {
+        name: 'AppGatewaySubnet'
+        properties: {
+          addressPrefix: appGatewaySubnetPrefix
         }
       }
     ]
@@ -681,6 +695,170 @@ resource mainRouteTable 'Microsoft.Network/routeTables@2023-02-01' = {
   location: location
   properties: {
     disableBgpRoutePropagation: false
+  }
+}
+
+// Storage Account(s)
+resource stgAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+  name: stgAccountName
+  location: location
+  sku: {
+    name: 'Standard_GRS'
+  }
+  kind: 'StorageV2'
+}
+
+// App Service Plan(s)
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
+  name: appServicePlanName
+  location: location
+  properties: {
+    reserved: true
+  }
+  sku: {
+    name: 'S1'
+  }
+  kind: 'linux'
+}
+
+// App Service(s)
+resource webApp1 'Microsoft.Web/sites@2022-09-01' = {
+  name: webApp1Name
+  location: location
+  properties: {
+    serverFarmId: appServicePlan.id
+    siteConfig: {
+      linuxFxVersion: 'node|14-lts'
+    }
+  }
+}
+
+resource webApp2 'Microsoft.Web/sites@2022-09-01' = {
+  name: webApp2Name
+  location: location
+  properties: {
+    serverFarmId: appServicePlan.id
+    siteConfig: {
+      linuxFxVersion: 'node|14-lts'
+    }
+  }
+}
+
+// Application Gateway Public IP(s)
+resource appGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
+  name: appGatewayPublicIPName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  zones: [
+    '1'
+  ]
+  properties: {
+    publicIPAddressVersion: 'IPv4'
+    publicIPAllocationMethod: 'Static'
+    idleTimeoutInMinutes: 4
+  }
+}
+
+// Application Gateway(s)
+resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
+  name: appGatewayName
+  location: location
+  properties: {
+    sku: {
+      name: 'Standard_v2'
+      tier: 'Standard_v2'
+      capacity: 2
+    }
+    gatewayIPConfigurations: [
+      {
+        name: 'appGatewayIpConfig'
+        properties: {
+          subnet: {
+            id: '${hubVNet.id}/subnets/AppGatewaySubnet'
+          }
+        }
+      }
+    ]
+    frontendIPConfigurations: [
+      {
+        name: 'appGatewayFrontendIP'
+        properties: {
+          publicIPAddress: {
+            id: appGatewayPublicIP.id
+          }
+        }
+      }
+    ]
+    frontendPorts: [
+      {
+        name: 'appGatewayFrontendPort'
+        properties: {
+          port: 80
+        }
+      }
+    ]
+    backendAddressPools: [
+      {
+        name: 'appGatewayBackendPool'
+        properties: {
+          backendAddresses: [
+            {
+              fqdn: webApp1.properties.defaultHostName
+            }
+            {
+              fqdn: webApp2.properties.defaultHostName
+            }
+          ]
+        }
+      }
+    ]
+    backendHttpSettingsCollection: [
+      {
+        name: 'appGatewayBackendHttpSettings'
+        properties: {
+          port: 80
+          protocol: 'Http'
+          cookieBasedAffinity: 'Disabled'
+          requestTimeout: 20
+          pickHostNameFromBackendAddress: true
+        }
+      }
+    ]
+    httpListeners: [
+      {
+        name: 'appGatewayHttpListener'
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGatewayFrontendIP')
+          }
+          frontendPort: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'appGatewayFrontendPort')
+          }
+          protocol: 'Http'
+          sslCertificate: null
+        }
+      }
+    ]
+    requestRoutingRules: [
+      {
+        name: 'rule1'
+        properties: {
+          priority: 1
+          ruleType: 'Basic'
+          httpListener: {
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName, 'appGatewayHttpListener')
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'appGatewayBackendPool')
+          }
+          backendHttpSettings: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'appGatewayBackendHttpSettings')
+          }
+        }
+      }
+    ]
   }
 }
 

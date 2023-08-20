@@ -24,6 +24,6 @@ net accounts /lockoutthreshold:100
 Invoke-WebRequest -Uri 'https://live.sysinternals.com/PsExec64.exe' -OutFile 'C:\Scripts\PsExec64.exe'
 
 # Set Scheduled Task
-Invoke-WebRequest -Uri '' -OutFile 'C:\Scripts\Unprotect-User.ps1'
+Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/pluralsight-cloud/AZ-500-Microsoft-Azure-Security-Technologies/main/1324%20-%20AZ-500%20-%20Manage%20Security%20Operations/Labs/Investigate%20Windows%20Security%20Events%20with%20Microsoft%20Sentinel/Unprotect-User.ps1' -OutFile 'C:\Scripts\Unprotect-User.ps1'
 $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File C:\Scripts\Unprotect-User.ps1"
 Register-ScheduledTask -TaskName "Unprotect-User" -Action $Action -Description "Unprotect User" -RunLevel Highest -User "System"

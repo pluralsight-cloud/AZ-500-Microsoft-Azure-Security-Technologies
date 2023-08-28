@@ -148,23 +148,23 @@ resource workspace 'microsoft.operationalinsights/workspaces@2021-06-01' = {
   ]
 }
 
-// resource vmCSE 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = {
-//   parent: vm
-//   name: '${vmName}-cse'
-//   location: location
-//   properties: {
-//     publisher: 'Microsoft.Compute'
-//     type: 'CustomScriptExtension'
-//     typeHandlerVersion: '1.10'
-//     autoUpgradeMinorVersion: true
-//     protectedSettings: {
-//       fileUris: [
-//         ''
-//       ]
-//       commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Deploy-Server.ps1'
-//     }
-//   }
-// }
+resource vmCSE 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = {
+  parent: vm
+  name: '${vmName}-cse'
+  location: location
+  properties: {
+    publisher: 'Microsoft.Compute'
+    type: 'CustomScriptExtension'
+    typeHandlerVersion: '1.10'
+    autoUpgradeMinorVersion: true
+    protectedSettings: {
+      fileUris: [
+        'https://raw.githubusercontent.com/pluralsight-cloud/AZ-500-Microsoft-Azure-Security-Technologies/main/1324%20-%20AZ-500%20-%20Manage%20Security%20Operations/Labs/Investigate%20Windows%20Security%20Events%20with%20Microsoft%20Sentinel/Deploy-Server.ps1'
+      ]
+      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Deploy-Server.ps1'
+    }
+  }
+}
 
 output vmsWithLogin array = [
   {

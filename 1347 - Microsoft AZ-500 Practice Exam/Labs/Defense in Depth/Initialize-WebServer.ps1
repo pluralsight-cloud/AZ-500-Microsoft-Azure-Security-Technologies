@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param (
     [string]
-    $ConnectionString = "Server=tcp:{ServerAddress.net},1433;Initial Catalog=sampledb;Persist Security Info=False;User ID=sqlAdmin;Password={Password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+    $ConnectionString
 )
 
 # Speed up by disabling progress
@@ -61,7 +61,7 @@ catch {
 # Download the WebApp
 try {
     Write-Verbose "START: Download WebApp"
-    #Invoke-WebRequest -Uri 'TODO' -OutFile 'C:\Temp\Publish.zip'
+    Invoke-WebRequest -Uri 'https://github.com/pluralsight-cloud/AZ-500-Microsoft-Azure-Security-Technologies/raw/main/1347%20-%20Microsoft%20AZ-500%20Practice%20Exam/Labs/Defense%20in%20Depth/Publish.zip' -OutFile 'C:\Temp\Publish.zip'
     Expand-Archive -Path 'C:\Temp\Publish.zip' -DestinationPath 'C:\Temp\' -Force
     Write-Verbose "END: Download WebApp"
 }
@@ -85,7 +85,7 @@ catch {
 # Download Application Settings
 try {
     Write-Verbose "START: Download Application Settings"
-    #Invoke-WebRequest -Uri "TODO" -OutFile "C:\inetpub\wwwroot\appsettings.json"
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/pluralsight-cloud/AZ-500-Microsoft-Azure-Security-Technologies/main/1347%20-%20Microsoft%20AZ-500%20Practice%20Exam/Labs/Defense%20in%20Depth/appsettings.json" -OutFile "C:\inetpub\wwwroot\appsettings.json"
     Write-Verbose "END: Download Application Settings"
 }
 catch {

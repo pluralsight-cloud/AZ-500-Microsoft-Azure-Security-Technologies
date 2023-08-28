@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.9.1.41621",
-      "templateHash": "5961565660032190968"
+      "templateHash": "5688427737198769043"
     }
   },
   "parameters": {
@@ -210,6 +210,27 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', 'nic-webserver1')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2020-12-01",
+      "name": "[format('{0}/{1}', 'webserver1', 'webserver1-cse')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.10",
+        "autoUpgradeMinorVersion": true,
+        "protectedSettings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/pluralsight-cloud/AZ-500-Microsoft-Azure-Security-Technologies/main/1347%20-%20Microsoft%20AZ-500%20Practice%20Exam/Labs/Defense%20in%20Depth/Initialize-WebServer.ps1"
+          ],
+          "commandToExecute": "[format('powershell.exe -ExecutionPolicy Bypass -File Initialize-WebServer1.ps1 -ConnectionString Server=tcp:{{ServerAddress.net}},1433;Initial Catalog=sampledb;Persist Security Info=False;User ID={0};Password={1};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;', parameters('sqlAdministratorLogin'), variables('sqlAdministratorLoginPassword'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', 'webserver1')]"
       ]
     }
   ]

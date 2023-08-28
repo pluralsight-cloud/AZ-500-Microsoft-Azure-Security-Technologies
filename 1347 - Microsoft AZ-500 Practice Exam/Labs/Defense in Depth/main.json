@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.9.1.41621",
-      "templateHash": "5688427737198769043"
+      "templateHash": "4875280828609140968"
     }
   },
   "parameters": {
@@ -226,7 +226,7 @@
           "fileUris": [
             "https://raw.githubusercontent.com/pluralsight-cloud/AZ-500-Microsoft-Azure-Security-Technologies/main/1347%20-%20Microsoft%20AZ-500%20Practice%20Exam/Labs/Defense%20in%20Depth/Initialize-WebServer.ps1"
           ],
-          "commandToExecute": "[format('powershell.exe -ExecutionPolicy Bypass -File Initialize-WebServer1.ps1 -ConnectionString Server=tcp:{{ServerAddress.net}},1433;Initial Catalog=sampledb;Persist Security Info=False;User ID={0};Password={1};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;', parameters('sqlAdministratorLogin'), variables('sqlAdministratorLoginPassword'))]"
+          "commandToExecute": "[format('powershell.exe -ExecutionPolicy Bypass -File Initialize-WebServer.ps1 -ConnectionString \"Server=tcp:{{ServerAddress.net}},1433;Initial Catalog=sampledb;Persist Security Info=False;User ID={0};Password={1};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;\"', parameters('sqlAdministratorLogin'), variables('sqlAdministratorLoginPassword'))]"
         }
       },
       "dependsOn": [

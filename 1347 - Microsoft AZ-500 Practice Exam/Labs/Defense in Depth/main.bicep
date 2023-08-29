@@ -174,6 +174,9 @@ resource webserver1 'Microsoft.Compute/virtualMachines@2020-12-01' = {
 }
 resource webserver1CSE 'Microsoft.Compute/virtualMachines/extensions@2020-12-01' = {
   parent: webserver1
+  dependsOn: [
+    sqlDatabase
+  ]
   name: 'webserver1-cse'
   location: location
   properties: {
@@ -185,7 +188,7 @@ resource webserver1CSE 'Microsoft.Compute/virtualMachines/extensions@2020-12-01'
       fileUris: [
         'https://raw.githubusercontent.com/pluralsight-cloud/AZ-500-Microsoft-Azure-Security-Technologies/main/1347%20-%20Microsoft%20AZ-500%20Practice%20Exam/Labs/Defense%20in%20Depth/Initialize-WebServer.ps1'
       ]
-      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Initialize-WebServer.ps1 -ConnectionString "Server=tcp:{ServerAddress.net},1433;Initial Catalog=sampledb;Persist Security Info=False;User ID=${sqlAdministratorLogin};Password=${sqlAdministratorLoginPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"'
+      commandToExecute: 'powershell.exe -ExecutionPolicy Bypass -File Initialize-WebServer.ps1 -ConnectionString "Server=tcp:${sqlServerName}.database.windows.net,1433;Initial Catalog=sampledb;Persist Security Info=False;User ID=${sqlAdministratorLogin};Password=${sqlAdministratorLoginPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"'
     }
   }
 }

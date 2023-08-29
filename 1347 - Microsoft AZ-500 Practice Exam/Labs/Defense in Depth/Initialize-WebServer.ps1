@@ -81,7 +81,6 @@ catch {
     throw $_
 }
 
-
 # Download Application Settings
 try {
     Write-Verbose "START: Download Application Settings"
@@ -103,6 +102,36 @@ catch {
     Write-Verbose "ERROR: Inject Application Settings"
     throw $_
 }
+
+# Inject Sample Data into the SQL Database
+$SQLQuery = @"
+CREATE TABLE Customers (
+    CustomerID int NOT NULL IDENTITY PRIMARY KEY,
+    Username varchar(255),
+    Password varchar(255),
+    FirstName varchar(255),
+    LastName varchar(255),
+    CreditCardNumber varchar(255)
+);
+
+INSERT INTO Customers (Username, Password, FirstName, LastName, CreditCardNumber)
+VALUES ('john_doe', 'securepass123', 'John', 'Doe', '1234-5678-9012-3456');
+INSERT INTO Customers (Username, Password, FirstName, LastName, CreditCardNumber)
+VALUES ('sarah_smith', 'mysecretp@ss', 'Sarah', 'Smith', '9876-5432-1098-7654');
+INSERT INTO Customers (Username, Password, FirstName, LastName, CreditCardNumber)
+VALUES ('mike_jones', 'passw0rd321', 'Mike', 'Jones', '5555-1234-5678-9999');
+INSERT INTO Customers (Username, Password, FirstName, LastName, CreditCardNumber)
+VALUES ('emily_wilson', 'qwertyuiop', 'Emily', 'Wilson', '4444-8888-2222-1111');
+INSERT INTO Customers (Username, Password, FirstName, LastName, CreditCardNumber)
+VALUES ('david_brown', 'brownie456', 'David', 'Brown', '7777-5555-3333-6666');
+"@
+$Connection = New-Object -TypeName System.Data.SqlClient.SqlConnection
+$Connection.ConnectionString = $ConnectionString
+$Connection.Open()
+$Command = $Connection.CreateCommand()
+$Command.CommandText = $SQLQuery
+$Command.ExecuteNonQuery()
+$Connection.Close()
 
 # Download .Net Core IIS Hosting Bundle
 try {

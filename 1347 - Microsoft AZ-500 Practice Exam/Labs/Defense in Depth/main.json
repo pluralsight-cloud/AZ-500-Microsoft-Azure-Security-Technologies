@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.9.1.41621",
-      "templateHash": "9643951089141031025"
+      "templateHash": "3228037936210416284"
     }
   },
   "parameters": {
@@ -34,7 +34,7 @@
       "apiVersion": "2020-04-01-preview",
       "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation'), resourceGroup().id, 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
       "properties": {
-        "description": "Managed identity for contributing tags",
+        "description": "Managed Identity for Policy Remediation",
         "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')).principalId]",
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
         "principalType": "ServicePrincipal"
@@ -48,9 +48,51 @@
       "apiVersion": "2020-04-01-preview",
       "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation'), resourceGroup().id, 'fb1c8493-542b-48eb-b624-b4c8fea62acd')]",
       "properties": {
-        "description": "Managed identity for contributing tags",
+        "description": "Managed Identity for Policy Remediation",
         "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')).principalId]",
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'fb1c8493-542b-48eb-b624-b4c8fea62acd')]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation'), resourceGroup().id, '749f88d5-cbae-40b8-bcfc-e573ddc772fa')]",
+      "properties": {
+        "description": "Managed Identity for Policy Remediation",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')).principalId]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '749f88d5-cbae-40b8-bcfc-e573ddc772fa')]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation'), resourceGroup().id, '92aaf0da-9dab-42b6-94a3-d43ce8d16293')]",
+      "properties": {
+        "description": "Managed Identity for Policy Remediation",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')).principalId]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '92aaf0da-9dab-42b6-94a3-d43ce8d16293')]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation'), resourceGroup().id, '056cd41c-7e88-42e1-933e-88ba6a50c9c3')]",
+      "properties": {
+        "description": "Managed Identity for Policy Remediation",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')).principalId]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '056cd41c-7e88-42e1-933e-88ba6a50c9c3')]",
         "principalType": "ServicePrincipal"
       },
       "dependsOn": [

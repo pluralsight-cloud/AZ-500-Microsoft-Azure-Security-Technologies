@@ -7,7 +7,7 @@ var sqlAdministratorLoginPassword  = 'SuperSecretPassword1234'
 var databaseName = 'sampledb'
 
 
-// Managed Identity for Policy Assignments
+// Managed Identity for Policy Remediation
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: 'id-policyremediation'
   location: location
@@ -18,7 +18,7 @@ resource ContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2020
   name: guid(managedIdentity.id, resourceGroup().id, 'b24988ac-6180-42a0-ab88-20f7382dd24c')
   scope: resourceGroup()
   properties: {
-    description: 'Managed identity for contributing tags'
+    description: 'Managed Identity for Policy Remediation'
     principalId: managedIdentity.properties.principalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
     principalType: 'ServicePrincipal'
@@ -30,9 +30,45 @@ resource SecurityAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@20
   name: guid(managedIdentity.id, resourceGroup().id, 'fb1c8493-542b-48eb-b624-b4c8fea62acd')
   scope: resourceGroup()
   properties: {
-    description: 'Managed identity for contributing tags'
+    description: 'Managed Identity for Policy Remediation'
     principalId: managedIdentity.properties.principalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'fb1c8493-542b-48eb-b624-b4c8fea62acd')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Monitoring Contributor for Managed Identity
+resource MonitoringContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(managedIdentity.id, resourceGroup().id, '749f88d5-cbae-40b8-bcfc-e573ddc772fa')
+  scope: resourceGroup()
+  properties: {
+    description: 'Managed Identity for Policy Remediation'
+    principalId: managedIdentity.properties.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '749f88d5-cbae-40b8-bcfc-e573ddc772fa')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Log Analytics Contributor for Managed Identity
+resource LogAnalyticsContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(managedIdentity.id, resourceGroup().id, '92aaf0da-9dab-42b6-94a3-d43ce8d16293')
+  scope: resourceGroup()
+  properties: {
+    description: 'Managed Identity for Policy Remediation'
+    principalId: managedIdentity.properties.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '92aaf0da-9dab-42b6-94a3-d43ce8d16293')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// SQL Security Manager for Managed Identity
+resource SQLSecurityManagerRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(managedIdentity.id, resourceGroup().id, '056cd41c-7e88-42e1-933e-88ba6a50c9c3')
+  scope: resourceGroup()
+  properties: {
+    description: 'Managed Identity for Policy Remediation'
+    principalId: managedIdentity.properties.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '056cd41c-7e88-42e1-933e-88ba6a50c9c3')
     principalType: 'ServicePrincipal'
   }
 }

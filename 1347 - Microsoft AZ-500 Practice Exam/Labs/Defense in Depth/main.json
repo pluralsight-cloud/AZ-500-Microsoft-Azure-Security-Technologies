@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.9.1.41621",
-      "templateHash": "7440073116189138217"
+      "templateHash": "11967933076375374688"
     }
   },
   "parameters": {
@@ -23,6 +23,40 @@
     "databaseName": "sampledb"
   },
   "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "id-policyremediation",
+      "location": "[variables('location')]"
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation'), resourceGroup().id, '24988ac-6180-42a0-ab88-20f7382dd24c')]",
+      "properties": {
+        "description": "Managed identity for contributing tags",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')).principalId]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "name": "[guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation'), resourceGroup().id, 'fb1c8493-542b-48eb-b624-b4c8fea62acd')]",
+      "properties": {
+        "description": "Managed identity for contributing tags",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')).principalId]",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'fb1c8493-542b-48eb-b624-b4c8fea62acd')]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'id-policyremediation')]"
+      ]
+    },
     {
       "type": "Microsoft.Sql/servers",
       "apiVersion": "2021-02-01-preview",
@@ -230,6 +264,7 @@
         }
       },
       "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', variables('sqlServerName'), variables('databaseName'))]",
         "[resourceId('Microsoft.Compute/virtualMachines', 'webserver1')]"
       ]
     }

@@ -6,6 +6,37 @@ param sqlAdministratorLogin string = 'sqlAdmin'
 var sqlAdministratorLoginPassword  = 'SuperSecretPassword1234'
 var databaseName = 'sampledb'
 
+
+// Managed Identity for Policy Assignments
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: 'id-policyremediation'
+  location: location
+}
+
+// Contributor Role for Managed Identity
+resource ContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(managedIdentity.id, resourceGroup().id, '24988ac-6180-42a0-ab88-20f7382dd24c')
+  scope: resourceGroup()
+  properties: {
+    description: 'Managed identity for contributing tags'
+    principalId: managedIdentity.properties.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '24988ac-6180-42a0-ab88-20f7382dd24c')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Security Admin for Managed Identity
+resource SecurityAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(managedIdentity.id, resourceGroup().id, 'fb1c8493-542b-48eb-b624-b4c8fea62acd')
+  scope: resourceGroup()
+  properties: {
+    description: 'Managed identity for contributing tags'
+    principalId: managedIdentity.properties.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'fb1c8493-542b-48eb-b624-b4c8fea62acd')
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // SQL Server
 resource sqlServer 'Microsoft.Sql/servers@2021-02-01-preview' = {
   name: sqlServerName

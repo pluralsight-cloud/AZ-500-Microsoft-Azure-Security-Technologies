@@ -65,3 +65,7 @@ Update-SessionEnvironment
 choco install vscode -y --no-progress
 choco install docker-desktop -y --no-progress
 choco install azure-cli -y --no-progress
+choco install microsoft-windows-terminal -y --no-progress
+
+# Restart
+Restart-Computer -Force

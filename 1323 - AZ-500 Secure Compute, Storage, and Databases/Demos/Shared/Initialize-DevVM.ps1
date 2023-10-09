@@ -64,3 +64,4 @@ Update-SessionEnvironment
 # Configure Software
 choco install vscode -y --no-progress
 choco install docker-desktop -y --no-progress
+choco install azure-cli -y --no-progress

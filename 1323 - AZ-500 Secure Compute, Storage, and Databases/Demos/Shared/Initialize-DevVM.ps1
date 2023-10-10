@@ -66,5 +66,9 @@ choco install docker-desktop -y --no-progress
 choco install azure-cli -y --no-progress
 choco install vscode -y --no-progress
 
+# Configure Docker
+Add-LocalGroupMember -Group docker-users -Member admin_user
+wsl --update
+
 # Restart
 Restart-Computer -Force

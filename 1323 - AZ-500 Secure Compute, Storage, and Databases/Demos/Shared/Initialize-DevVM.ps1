@@ -62,12 +62,9 @@ Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
 Update-SessionEnvironment
 
 # Configure Software
-choco install vscode -y --no-progress
+choco install docker-desktop -y --no-progress
 choco install azure-cli -y --no-progress
-
-# Install Docker CE
-Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/microsoft/Windows-Containers/Main/helpful_tools/Install-DockerCE/install-docker-ce.ps1" -o install-docker-ce.ps1
-.\install-docker-ce.ps1
+choco install vscode -y --no-progress
 
 # Restart
 Restart-Computer -Force

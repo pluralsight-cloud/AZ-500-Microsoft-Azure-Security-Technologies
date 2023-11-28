@@ -1,5 +1,6 @@
 # Set some defaults
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 $LogFile = Join-Path -Path ($env:ProgramData) -ChildPath "Labsetup.log"
 
 # Functions
@@ -32,7 +33,7 @@ try {
 
 # Download Storage Explorer
 try {
-    Invoke-WebRequest -Uri "https://github.com/microsoft/AzureStorageExplorer/releases/download/v1.32.0/StorageExplorer-windows-x64.exe" -UseBasicParsing -OutFile "$($env:ProgramData)\StorageExplorer.exe"
+    Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2216182&clcid=0x409" -UseBasicParsing -OutFile "$($env:ProgramData)\StorageExplorer.exe"
     Write-Log -Value "Downloaded Storage Explorer"
 }
 catch {

@@ -42,7 +42,7 @@ catch {
 
 # Install Storage Explorer
 try {
-    Start-Process -FilePath "$($env:ProgramData)\StorageExplorer-windows-x64.exe" -ArgumentList @('/VERYSILENT','/NORESTART','/ALLUSERS') -Wait
+    Start-Process -FilePath "$($env:ProgramData)\StorageExplorer.exe" -ArgumentList @('/VERYSILENT','/NORESTART','/ALLUSERS') -Wait
     Write-Log -Value "Installed Storage Explorer"
 }
 catch {
@@ -62,8 +62,8 @@ catch {
 
 # Download the Images
 try {
-    $url = ""
-    $zipfile = "$($env:ProgramData)\Azure-LearningActivity-CfgSecMon.zip"
+    $url = "https://github.com/pluralsight-cloud/AZ-500-Microsoft-Azure-Security-Technologies/raw/main/1323%20-%20AZ-500%20Secure%20Compute,%20Storage,%20and%20Databases/Labs/Configuration%20and%20Security%20of%20Azure%20Storage%20Accounts/Files.zip"
+    $zipfile = "$($env:ProgramData)\Files.zip"
     $folder = "C:\images"
     Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $zipfile
     Write-Log -Value "Downloaded sample images"
